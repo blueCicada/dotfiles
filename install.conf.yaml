@@ -22,7 +22,7 @@
     ~/.zprofile:            zsh/zprezto/runcoms/zprofile
     ~/.zshenv:              zsh/zprezto/runcoms/zshenv
     ~/.zprezto:             zsh/zprezto
-#    ~/.zcustom:             zsh/zcustom
+    ~/.zcustom:             zsh/zcustom
     ~/.zalias:              zsh/zalias
 
     ~/.vim: vim
