@@ -36,4 +36,7 @@
 
 - shell:
   - [git submodule update --init, Installing submodules]
-  - [zprezto-update, Updating zprezto]
+#  - [zprezto-update, Updating zprezto]     this never seems to work on the first go
+  - cd $ZPREZTODIR
+  - git pull
+  - git submodule update --init --recursive
