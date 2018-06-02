@@ -1,0 +1,34 @@
+#nav
+alias u='cd ../'
+alias b='cd $OLDPWD'
+alias h='cd ~'
+alias do='cd ~/Documents'
+alias dl='cd ~/Downloads'
+alias doot='cd ~/.dotfiles'
+
+#typos
+alias ivm='vim'
+alias les='less'
+
+
+#conversions
+alias rot13="tr '[A-Za-z]' '[N-ZA-Mn-za-m]'"
+
+alias h2b='hex2bin'
+alias b2h='bin2hex'
+alias hex2bin='xxd -ps -r'
+alias bin2hex='xxd -ps'
+#hex2bin() {
+#   #sed 's/\([0-9A-F]\{2\}\)/\\\\\\x\1/gI' "$1" | xargs printf
+#}
+#bin2hex() {
+#   #hexdump -C "$1" | cut -b9- | cut -d"|" -f1 | tr -d ' \t\n\r'
+#}
+
+#useful
+alias reload="source ~/.zshrc"
+
+#other stuff
+rng() {
+   od -tu2 -vAn -N$1 < /dev/urandom | tr '\n' ' ' | sed 's/ //g'
+}

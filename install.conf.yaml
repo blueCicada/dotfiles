@@ -1,0 +1,39 @@
+- defaults:
+    link:
+      relink: true
+
+- clean: ['~']
+
+#- shell:
+#  - [git submodule update --init --recursive, Installing submodules]
+
+#- link:
+#    ~/.oh-my-zsh: oh-my-zsh
+
+- link:
+    ~/.dotfiles: ''
+    ~/.shell:
+
+    ~/.zsh:
+    ~/.zshrc:               zsh/zprezto/runcoms/zshrc
+    ~/.zpreztorc:           zsh/zprezto/runcoms/zpreztorc
+    ~/.zlogin:              zsh/zprezto/runcoms/zlogin
+    ~/.zlogout:             zsh/zprezto/runcoms/zlogout
+    ~/.zprofile:            zsh/zprezto/runcoms/zprofile
+    ~/.zshenv:              zsh/zprezto/runcoms/zshenv
+    ~/.zprezto:             zsh/zprezto
+#    ~/.zcustom:             zsh/zcustom
+    ~/.zalias:              zsh/zalias
+
+    ~/.vim: vim
+    ~/.vimrc: vim/vimrc
+#    ~/.vim/bundle/mysnippets:
+#        path: vim/mysnippets
+#        force: true
+#    ~/.oh-my-zsh/custom/zalias: 
+#        path: zalias
+#        force: true
+
+- shell:
+  - [git submodule update --init, Installing submodules]
+  - [zprezto-update, Updating zprezto]

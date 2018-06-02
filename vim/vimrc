@@ -1,0 +1,105 @@
+""Exam vimrc
+"set nocompatible
+"set backspace=indent,eol,start
+"set encoding=utf-8
+"set number
+"set ruler
+"syntax enable
+"set tabstop=4
+"set shiftwidth=4
+"set expandtab
+"set autoindent
+"set smartindent
+"set showmatch
+"highlight ColorColumn ctermbg=grey
+"call matchadd('ColorColumn', '\%81v', 80)
+"
+"" (additions to be made after exam begins) "
+"inoremap jk <Esc>
+"inoremap kj <Esc>
+"set tabstop=2
+"set shiftwidth=2
+"set incsearch
+
+set number
+colo darkblue
+synt on
+
+set incsearch
+"set hlsearch 
+"disabled until I find an elegant way of turning off highlighting after a
+"search
+
+set colorcolumn=72
+
+filetype plugin indent on
+set tabstop=3              " show existing tab with 3 spaces width
+set expandtab              " On pressing tab, insert 3 spaces
+set shiftwidth=3           " when indenting with '>', use 3 spaces width
+set autoindent             " It seems sw also affects ai width
+
+set mouse=a
+
+"set paste
+set nopaste
+
+" reaching for the <Esc> key to escape insert mode is too annoying
+:inoremap jk <Esc>
+:inoremap kj <Esc>
+
+" thanks Callum
+function! s:CloseBracket()
+    let line = getline('.')
+    if line =~# '^\s*\(struct\|class\|enum\) '
+        return "{\<Enter>};\<Esc>O"
+    elseif searchpair('(', '', ')', 'bmn', '', line('.'))
+        " Probably inside a function call. Close it off.
+        return "{\<Enter>});\<Esc>O"
+    else
+        return "{\<Enter>}\<Esc>O"
+    endif
+endfunction
+inoremap <expr> {<Enter> <SID>CloseBracket()
+
+"UPDATE: the following no longer works for me
+"dunno if it's interference from snipmate
+"SPOOKY shit for automatically entering/exiting paste mode when pasting
+let &t_SI .= "\<Esc>[?2004h"
+let &t_EI .= "\<Esc>[?2004l"
+
+inoremap <special> <expr> <Esc>[200~ XTermPasteBegin()
+
+function! XTermPasteBegin()
+  set pastetoggle=<Esc>[201~
+  set paste
+  return ""
+endfunction
+"t o m a t o   s a u c e: https://coderwall.com/p/if9mda/
+
+autocmd BufEnter *.tem :setlocal filetype=cpp
+
+execute pathogen#infect()
+"syntastic shit
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+let g:syntastic_loc_list_height = 5
+
+let g:syntastic_cpp_compiler_options = ' -std=c++14'
+"snipmate shit
+"set runtimepath^=~/.vim/bundle
+"set runtimepath^=~/.vim/bundle/vim-addon-mw-utils
+"set runtimepath^=~/.vim/bundle/tlib_vim
+"set runtimepath^=~/.vim/bundle/vim-snipmate
+"set runtimepath^=~/.vim/bundle/snippets
+"set runtimepath^=~/.vim/bundle/snippets/UltiSnips
+"set rtp^=~/.vim/bundle/snippets/UltiSnips/snippets
+"set rtp^=~/.vim/bundle/vim-snipmate/after/plugin
+"
+"let g:snippets_dir="~/.vim/bundle/snippets/snippets, ~/.vim/bundle/snippets/UltiSnips"
+"set rtp+=~/.vim/bundle/mysnippets/
