@@ -32,3 +32,22 @@ alias reload="source ~/.zshrc"
 rng() {
    od -tu2 -vAn -N$1 < /dev/urandom | tr '\n' ' ' | sed 's/ //g'
 }
+
+#recon
+zd() {
+   domain=`echo "$1" | sed 's/\./\\./g'` # escape dots so the cmd below works properly
+   wordlist=$2
+   cat $wordlist | sed 's/$/\.'$domain'/g' | ~/go/bin/zdns A | grep "NOERROR" | grep -v "127.0.0.1" | jq '.["name"]' | sed 's/\"//g'
+}
+
+gobs() {
+   domain=$1
+   wordlist=$2
+   gobuster -m dns -u $domain -w $wordlist -q
+}
+
+dstrip() {
+   domain=`echo "$1" | sed 's/\./\\./g'`
+   wordlist=$2
+   cat $wordlist | sed 's/\.'$domain'$//g'
+}
