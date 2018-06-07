@@ -11,7 +11,11 @@ alias ivm='vim'
 alias les='less'
 
 
-#conversions
+#data processing
+len() {
+   #perl -e 'print length("$1")'
+   echo -n "$1" | wc -c
+}
 alias rot13="tr '[A-Za-z]' '[N-ZA-Mn-za-m]'"
 
 alias h2b='hex2bin'
@@ -27,6 +31,8 @@ alias bin2hex='xxd -ps'
 
 #useful
 alias reload="source ~/.zshrc"
+alias rel=reload
+alias zedit='vim ~/.zalias' #because i've been editing this file like crazy rn
 
 #other stuff
 rng() {
@@ -34,6 +40,10 @@ rng() {
 }
 
 #recon
+subl() {
+   sublist3r.py -d $1 -p80 | grep "Found open" | cut -f1 -d' '
+}
+
 zd() {
    domain=`echo "$1" | sed 's/\./\\./g'` # escape dots so the cmd below works properly
    wordlist=$2
@@ -43,11 +53,43 @@ zd() {
 gobs() {
    domain=$1
    wordlist=$2
-   gobuster -m dns -u $domain -w $wordlist -q
+   gobuster -m dns -u $domain -w $wordlist -t 50 -q | cut -f2 -d' '
 }
 
-dstrip() {
+gobd() {
+   echo "remember to use https lol"
+   domain=$1
+   wordlist=$2
+   gobuster -m dir -u $domain -w $wordlist -t 50 -q # | cut -f2 -d' '
+}
+
+dstrip() { # strip domain names
    domain=`echo "$1" | sed 's/\./\\./g'`
    wordlist=$2
    cat $wordlist | sed 's/\.'$domain'$//g'
 }
+
+mash() {
+   domain=$1
+   wordlist=$2
+   known=`rng 7`
+   touch "$known.subdomains.txt"
+   echo "Dumping subdomains in $known.subdomains.txt..."
+   subl $domain >> "$known.subdomains.txt" &
+   gobs $domain $wordlist >> "$known.subdomains.txt" &
+   zd $domain $wordlist >> "$known.subdomains.txt" &
+   wait
+   sort "$known.subdomains.txt" -u -o "$known.subdomains.txt"
+   dstrip $domain "$known.subdomains.txt" > "$known.words.txt"
+   echo "pls inspect output files for unprintable chars"
+}
+
+#fz() {
+#   url=$1
+#   verb=$2
+#   payload=$3
+#   lower=$4
+#   upper=$5
+#   session=$6
+#   wfuzz -p localhost:8080 --filter "content=~'false'" -Z -c -v -X $verb -H "Content-Type: application/x-www-form-urlencoded" -z range,$lower-$upper -b "session=$session" -d "$payload" "$url" 
+#}
