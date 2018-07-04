@@ -41,7 +41,10 @@ rng() {
 
 #recon
 subl() {
-   sublist3r.py -d $1 -p80 | grep "Found open" | cut -f1 -d' '
+   #sublist3r.py -d $1 -p80 | grep "Found open" | cut -f1 -d' '
+   # ^this is generating unprintable chars, pls fix
+   sublist3r.py -d $1 -p80 | grep "Found open" | cut -f1 -d' ' | cut -c6- | sed 's/....$//g'
+   # hacky af
 }
 
 zd() {
@@ -69,6 +72,10 @@ dstrip() { # strip domain names
    cat $wordlist | sed 's/\.'$domain'$//g'
 }
 
+mrg() { #merge wordlists
+   cat "$@" | sort -u
+}
+
 mash() {
    domain=$1
    wordlist=$2
@@ -84,6 +91,18 @@ mash() {
    echo "pls inspect output files for unprintable chars"
 }
 
+altd() {
+   echo "Make sure list of known subdomains still has the domain suffix"
+   domain=$1
+   knownsubs=$2
+   wordlist=$3
+   outfile=$4
+   dummy=`rng 7`
+   altdns.py -i $knownsubs -w $wordlist -o $outfile.rng
+   dstrip $domain $outfile.rng > $outfile
+   rm -f $outfile.rng
+}
+
 #fz() {
 #   url=$1
 #   verb=$2
@@ -93,3 +112,12 @@ mash() {
 #   session=$6
 #   wfuzz -p localhost:8080 --filter "content=~'false'" -Z -c -v -X $verb -H "Content-Type: application/x-www-form-urlencoded" -z range,$lower-$upper -b "session=$session" -d "$payload" "$url" 
 #}
+fz() {
+   url=$1
+   payload=$2
+   lower=$3
+   upper=$4
+   avoid=$5
+   wfuzz --filter "content!~'$avoid'" -c -z range,$lower-$upper -d $payload $url
+   #^if using this outside of an alias, you need to escape the exclamation mark
+}
