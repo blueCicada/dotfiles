@@ -1,4 +1,4 @@
-#nav
+# nav
 alias u='cd ../'
 alias b='cd $OLDPWD'
 alias h='cd ~'
@@ -6,12 +6,12 @@ alias do='cd ~/Documents'
 alias dl='cd ~/Downloads'
 alias doot='cd ~/.dotfiles'
 
-#typos
+# typos
 alias ivm='vim'
 alias les='less'
 
 
-#data processing
+# data processing
 len() {
    #perl -e 'print length("$1")'
    echo -n "$1" | wc -c
@@ -29,17 +29,17 @@ alias bin2hex='xxd -ps'
 #   #hexdump -C "$1" | cut -b9- | cut -d"|" -f1 | tr -d ' \t\n\r'
 #}
 
-#useful
+# useful
 alias reload="source ~/.zshrc"
 alias rel=reload
-alias zedit='vim ~/.zalias' #because i've been editing this file like crazy rn
+alias zedit='vim ~/.zalias' #because i've been editing this file like crazy 
 
-#other stuff
+# other stuff
 rng() {
    od -tu2 -vAn -N$1 < /dev/urandom | tr '\n' ' ' | sed 's/ //g'
 }
 
-#recon
+# recon
 subl() {
    #sublist3r.py -d $1 -p80 | grep "Found open" | cut -f1 -d' '
    # ^this is generating unprintable chars, pls fix
@@ -121,3 +121,39 @@ fz() {
    wfuzz --filter "content!~'$avoid'" -c -z range,$lower-$upper -d $payload $url
    #^if using this outside of an alias, you need to escape the exclamation mark
 }
+
+# binexp
+sysoff() { #get libc offset of system() (for a given libc)
+   readelf -s $1 | grep system
+   # equivalent in pwntools is ELF('name of libc').symbols['system']
+}
+
+shoff() { #get libc offset of "/bin/sh" (for a given libc)
+   strings -t x ./program | grep "/bin/sh"
+   # equivalent in pwntools is next(ELF('name of libc').search('/bin/sh\x00'))
+}
+
+libc() { #given a binary, find which libc it uses locally + other info, incl. start address (possibly randomised)
+   # don't expect this to work if the binary doesn't wait for input and finishes instantly
+   ./$1 & pwnme=`pidof ./$1`; cat /proc/$pwnme/maps | grep libc | head -n 1 | uniq; kill -9 $pwnme
+}
+
+libcname() { #given a binary, find which libc it uses locally
+   # don't expect this to work if the binary doesn't wait for input and finishes instantly
+   ./$1 & pwnme=`pidof ./$1`; cat /proc/$pwnme/maps | grep libc | sed 's/.*    //g' | uniq; kill -9 $pwnme
+}
+
+bof() { #basic probe for bof, don't be surprised if it doesn't work
+   cyclic -l `cyclic 200 | strace ./$1 3>&1 1>&2 2>&3 3>&- | grep si_addr | sed -E 's/.*si_addr=(.*)}.*/\1/g'`
+}
+
+aslroff() {
+   echo 0 > /proc/sys/kernel/randomize_va_space
+}
+
+aslron() {
+   echo 2 > /proc/sys/kernel/randomize_va_space
+}
+
+alias dumpt='objdump -TR'
+alias dump='objdump -xDM intel'

