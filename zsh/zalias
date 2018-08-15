@@ -148,11 +148,11 @@ bof() { #basic probe for bof, don't be surprised if it doesn't work
 }
 
 aslroff() {
-   echo 0 > /proc/sys/kernel/randomize_va_space
+   echo 0 >! /proc/sys/kernel/randomize_va_space
 }
 
 aslron() {
-   echo 2 > /proc/sys/kernel/randomize_va_space
+   echo 2 >! /proc/sys/kernel/randomize_va_space
 }
 
 alias dumpt='objdump -TR'
