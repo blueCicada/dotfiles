@@ -2,8 +2,7 @@
 alias u='cd ../'
 alias b='cd $OLDPWD'
 alias h='cd ~'
-alias do='cd ~/Documents'
-alias doc=do
+alias doc='cd ~/Documents'
 alias dl='cd ~/Downloads'
 alias doot='cd ~/.dotfiles'
 
@@ -39,6 +38,8 @@ alias zedit='vim ~/.zalias' #because i've been editing this file like crazy
 rng() {
    od -tu2 -vAn -N$1 < /dev/urandom | tr '\n' ' ' | sed 's/ //g'
 }
+
+alias rainbow='for (( i = 30; i < 38; i++ )); do echo -e "\033[0;"$i"m Normal: (0;$i); \033[1;"$i"m Light: (1;$i)"; done'
 
 #pinched from https://unix.stackexchange.com/a/30486
 calc () {

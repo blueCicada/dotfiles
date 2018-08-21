@@ -13,16 +13,16 @@ snippet pwn "general pwntools template"
 	log.info("Iniciando el hackeo.")
 
 	remoteflag = 0
-	IP = ''
-	PORT = 6005
+	IP = 'midsem.6447.sec.edu.au'
+	PORT = 8011
 	FILENAME = "${1:pwnme}"
 	if remoteflag:
 		io = remote(IP, PORT)
 	else:
 		io = process(FILENAME) # for more args, make a list [FILENAME, a, b, ...]
 	
+	elf = context.binary = ELF(FILENAME)
 	# Dump symbols
-	elf = ELF(FILENAME)
 	import json
 	print json.dumps({k:hex(v) for k,v in elf.symbols.items()}, indent=4)
 	# radare can probably pull out more, this just shows you what pwntools can see
@@ -30,18 +30,33 @@ snippet pwn "general pwntools template"
 	payload = cyclic(100)
 	payload += pack(0x41414141)
 	
-	#io.interactive()
 	io.sendline(payload)
-	print io.recvall()
+	io.interactive()
+	#print io.recvall()
 
 snippet sc "shellcode payload"
 	shellcode = asm(shellcraft.${1:i386 | amd64}.linux.sh())
+
+#update this pls
+snippet scv "shellcode payload with verbose debugging output"
+	shellcode = asm(shellcraft.${1:i386 | amd64}.linux.sh())
+	log.info(shellcode.encode('hex'))
+	log.info(shellcraft.i386.linux.sh())
+
+snippet sc3 "shellcode payload for 32 bit"
+	shellcode = asm(shellcraft.i386.linux.sh())
+
+snippet sc6 "shellcode payload for 64 bit"
+	shellcode = asm(shellcraft.amd64.linux.sh())
 
 # sample use case: you leak an address/canary, but you want to visually inspect the bytes
 # you really should know this by now, but it's easy to forget/doubt yourself when panicking
 # pack converts hex (eg 0x41414141) into chars (pack(0x41414141) == "AAAA"), unpack does the opposite
 snippet strtohex "convert string of raw bytes to hexstring (eg 0xdeadbeef)"
 	hex(unpack(${1:data}, 'all'))
+
+snippet hexstrtoint "convert hexstring (ie a string, not a number) to an int"
+	int(${1:data}, 16)
 
 # modded from https://github.com/Naetw/CTF-pwn-tips#find-binsh-or-sh-in-library
 # Note: you'll have to find the base yourself
@@ -171,10 +186,19 @@ snippet gdbe "gdb, break on entry point. Requires pwndbg"
 
 
 snippet dump "Coredump: has useful info incl. esp and eip at segfault"
+	#assuming 32 bit
 	core = Coredump('./core')                                              
 	print hex(core.eip) 
 	print cyclic_find(core.eip) #offset is at: 
 	print hex(core.esp) #only useful if ASLR is off
+
+snippet fump "As above, but 32/64 bit independent. Specifically for bof"
+	#elf = context.binary = ELF(FILENAME)
+	core = Coredump('./core')                                              
+	print hex(core.fault_addr)
+	print hex(u32(pack(core.fault_addr)[:4]))        
+	print cyclic_find(u32(pack(core.fault_addr)[:4]))
+
 ## Z3 ##
 
 # modded from https://www.youtube.com/watch?v=b92CW-NZ3l0
