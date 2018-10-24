@@ -42,6 +42,8 @@ snippet sc "shellcode payload"
 snippet scv "shellcode payload with verbose debugging output"
 	shellcode = asm(shellcraft.${1:i386 | amd64}.linux.sh())
 	log.info(enhex(shellcode))
+	log.info(repr(shellcode))
+	log.info(hexdump(shellcode))
 	log.info(shellcraft.$1.linux.sh())
 
 snippet sc3 "shellcode payload for 32 bit"
@@ -170,6 +172,7 @@ snippet rop "rop template. This one doesn't use the rop module"
 	io.sendline(payload)
 	io.interactive()
 
+# UPDATE: I don't actually use these two anymore, I find using elf.got.foo and elf.sym.bar directly far more convenient
 # Reasons you might do this: PLT & GOT are fixed, so you can use it to call libc functions without knowing where libc starts in the binary
 # note: .symbols['got.foo'] == .got['foo'] == .got.foo
 snippet gota "get address of an entry in the GOT"
@@ -234,16 +237,17 @@ snippet fump "As above, but 32/64 bit independent. Specifically for bof"
 	print hex(u32(pack(core.fault_addr)[:4]))        
 	print cyclic_find(u32(pack(core.fault_addr)[:4]))
 
-# hexdump a string, stolen from:
-# https://github.com/Inndy/formatstring-exploit#usage
-snippet hexdump
-	def dump(x):
-		try:
-			from hexdump import hexdump
-			hexdump(x)
-		except ImportError:
-			import binascii, textwrap
-			print('\n'.join(textwrap.wrap(binascii.hexlify(x),32)))
+# Pwntools already includes a hexdump function, you don't really need this
+## hexdump a string, stolen from:
+## https://github.com/Inndy/formatstring-exploit#usage
+#snippet hexdump
+#	def dump(x):
+#		try:
+#			from hexdump import hexdump
+#			hexdump(x)
+#		except ImportError:
+#			import binascii, textwrap
+#			print('\n'.join(textwrap.wrap(binascii.hexlify(x),32)))
 
 ## Z3 ##
 
