@@ -52,6 +52,13 @@ snippet sc3 "shellcode payload for 32 bit"
 snippet sc6 "shellcode payload for 64 bit"
 	shellcode = asm(shellcraft.amd64.linux.sh())
 
+# inspired by my scv snippet
+snippet wtf "dump a string in various forms"
+	wtf = ${1:payload}
+	log.info(enhex(wtf))
+	log.info(repr(wtf))
+	log.info(hexdump(wtf))
+
 # sample use case: you leak an address/canary, but you want to visually inspect the bytes
 # you really should know this by now, but it's easy to forget/doubt yourself when panicking
 # pack converts hex (eg 0x41414141) into chars (pack(0x41414141) == "AAAA"), unpack does the opposite
