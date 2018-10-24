@@ -1,2 +1,22 @@
 snippet vol
 	volatile 
+
+snippet hook
+	static int ${1:funcname}_hook(struct thread *td, void *syscall_args)
+	{
+	   struct $1_args /* {
+	      int     fd;
+	      char    *path;
+	      int     flag;
+	      int     mode;
+	   } */ *uap;
+		uap = (struct $1_args *)syscall_args;
+	
+	   int error;
+	   error = sys_$1(td, syscall_args);
+	
+	   //uprintf("  SYS_$1: \"%s\", fd: %d, flags: %d, mode: %X\n", uap->path, uap->fd, uap->flag, uap->mode);
+	
+	   return (error);
+	}
+
