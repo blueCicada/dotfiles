@@ -171,6 +171,15 @@ aslron() {
 alias dumpt='objdump -TR'
 alias dump='objdump -xDM intel'
 
+#r2 aliases
+alias afll="r2 -Aqc 'afll'"
+alias agc="r2 -Aqc 's main; agc'"
+alias agC="r2 -Aqc 'agC'"
+alias agcv="r2 -Aqc 's main; agcv'"
+alias agCv="r2 -Aqc 'agCv'"
+alias agA="r2 -Aqc 'agA'"
+alias agAv="r2 -Aqc 'agAv'"
+
 binfo() {
    YELLOW='\033[1;33m'; WHITE='\033[1;37m'; GREEN='\033[1;32m'; RED='\033[0;31m'; PURPLE='\033[0;35m'; NC='\033[0m'; pwnme=$1; checksec ${pwnme}; paste <(echo "${WHITE}FUNCTIONS/SYMBOLS${NC}"; rabin2 -qs ${pwnme} | egrep -ve ' (0|1) ' -e imp -e ' _' | sort -k 1) /dev/null <(echo "${GREEN}STRINGS${NC}"; rabin2 -z ${pwnme}) | column -s $'\t' -tn; echo "${YELLOW}LIBRARY FUNCTIONS${NC}"; echo "${RED}Pwnable:${NC}"; rabin2 -i ${pwnme} | egrep '( gets| scanf|strcpy|strcat|malloc|system)' | cut -c5- | sed 's/scanf/scanf (one-byte overflow if field width is equal to buffer length)/' | sed 's/malloc/malloc (probably a heap pwnable)/' | sed 's/system/system (probably a win function!!!)/' ; echo "${PURPLE}Leakable:${NC}" && rabin2 -i ${pwnme} | egrep '(read|strncpy|memcpy)' | cut -c5-
 }
