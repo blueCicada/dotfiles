@@ -46,7 +46,7 @@ snippet scv "shellcode payload with verbose debugging output"
 	shellcode = asm(shellcraft.${1:i386 | amd64}.linux.sh())
 	log.info(enhex(shellcode))
 	log.info(repr(shellcode))
-	log.info(hexdump(shellcode))
+	log.hexdump(shellcode)
 	log.info(shellcraft.$1.linux.sh())
 
 snippet sc3 "shellcode payload for 32 bit"
@@ -60,7 +60,7 @@ snippet wtf "dump a string in various forms"
 	wtf = ${1:payload}
 	log.info(enhex(wtf))
 	log.info(repr(wtf))
-	log.info(hexdump(wtf))
+	log.hexdump(wtf)
 
 # sample use case: you leak an address/canary, but you want to visually inspect the bytes
 # you really should know this by now, but it's easy to forget/doubt yourself when panicking
@@ -204,6 +204,9 @@ snippet cyf "given a subsequence from cyclic, calculate the offset"
 
 snippet ln
 	log.info(${0:msg})
+
+snippet lx
+	log.hexdump(${0:msg})
 
 snippet gdb
 	if not remoteflag:
