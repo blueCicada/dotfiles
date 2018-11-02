@@ -46,6 +46,7 @@ alias rainbow='for (( i = 30; i < 38; i++ )); do echo -e "\033[0;"$i"m Normal: (
 calc () {
     bc -l <<< "$@"
 }
+# tbh i just use echo $(()) now
 
 # recon
 subl() {
@@ -171,6 +172,8 @@ aslron() {
 alias dumpt='objdump -TR'
 alias dump='objdump -xDM intel'
 
+alias rop='ROPgadget --ropchain --binary'
+
 #r2 aliases
 alias afll="r2 -Aqc 'afll'"
 alias agc="r2 -Aqc 's main; agc'"
@@ -181,11 +184,88 @@ alias agA="r2 -Aqc 'agA'"
 alias agAv="r2 -Aqc 'agAv'"
 
 binfo() {
-   YELLOW='\033[1;33m'; WHITE='\033[1;37m'; GREEN='\033[1;32m'; RED='\033[0;31m'; PURPLE='\033[0;35m'; NC='\033[0m'; pwnme=$1; checksec ${pwnme}; paste <(echo "${WHITE}FUNCTIONS/SYMBOLS${NC}"; rabin2 -qs ${pwnme} | egrep -ve ' (0|1) ' -e imp -e ' _' | sort -k 1) /dev/null <(echo "${GREEN}STRINGS${NC}"; rabin2 -z ${pwnme}) | column -s $'\t' -tn; echo "${YELLOW}LIBRARY FUNCTIONS${NC}"; echo "${RED}Pwnable:${NC}"; rabin2 -i ${pwnme} | egrep '( gets| scanf|strcpy|strcat|malloc|system)' | cut -c5- | sed 's/scanf/scanf (one-byte overflow if field width is equal to buffer length)/' | sed 's/malloc/malloc (probably a heap pwnable)/' | sed 's/system/system (probably a win function!!!)/' ; echo "${PURPLE}Leakable:${NC}" && rabin2 -i ${pwnme} | egrep '(read|strncpy|memcpy)' | cut -c5-
-}
-
-fmtgrep() {
-   cat -n $1 | egrep "printf\([^\"]"
+   YELLOW='\033[1;33m'; WHITE='\033[1;37m'; GREEN='\033[1;32m'; RED='\033[0;31m'; PURPLE='\033[0;35m'; NC='\033[0m'; pwnme=$1; checksec ${pwnme}; paste <(echo "${WHITE}FUNCTIONS/SYMBOLS${NC}"; rabin2 -qs ${pwnme} | egrep -ve ' (0|1) ' -e imp -e ' _' | sort -k 1) /dev/null <(echo "${GREEN}STRINGS${NC}"; rabin2 -z ${pwnme}) | column -s $'\t' -tn; echo "${YELLOW}LIBRARY FUNCTIONS${NC}"; echo "${RED}Pwnable:${NC}"; rabin2 -i ${pwnme} | egrep '( gets| scanf|strcpy|strcat|strncat|malloc|system)' | cut -c5- | sed 's/scanf/scanf (one-byte overflow if field width is equal to buffer length)/' | sed 's/malloc/malloc (probably a heap pwnable)/' | sed 's/system/system (probably a win function!!!)/' ; echo "${PURPLE}Leakable:${NC}" && rabin2 -i ${pwnme} | egrep '(read|strncpy|memcpy)' | cut -c5-
 }
 
 alias rage="source ~/.virtualenvs/angr/bin/activate"
+
+# source audit
+fmtgrep() {
+   #cat -n $1 | egrep "printf\([^\"]"
+   cat -n $1 | egrep "([^fsn]printf *\( *[_A-Za-z]|sprintf *\( *[^\"]+ *, *[_A-Za-z]|fprintf *\( *[^\"]+ *, *[_A-Za-z])"
+}
+
+badgrep() {
+   cat -n $1 | egrep "(scanf *\( *\"[^\"]*%s|[^f]gets|strcpy|strcat|strncat)"
+}
+
+susgrep() {
+   cat -n $1 | egrep "(scanf *\( *\"[^\"]*%[0-9]*s|[^f]gets|strcpy|strcat|strncat|memcpy|strncpy|read)"
+}
+
+switchgrep() {
+   cat -n $1 | egrep "switch"
+}
+
+coc() {
+   #https://stackoverflow.com/a/4341647
+   if [ "$#" -eq 1 ] ; then
+      # https://stackoverflow.com/a/7802785
+      case $1 in *.cocci) spatch --parse-cocci $1;; 
+               *.c) spatch --parse-c $1;;
+               *) echo "\033[0;31m$1 is not a .c or .cocci file\033[0m";;
+      esac
+      #spatch --parse-cocci uaf.cocci
+   elif [ "$#" -eq 2 ] ; then
+      if [[ "$1" = *.cocci ]] && [[ "$2" = *.c ]] ; then
+         spatch --sp-file $1 $2
+      else
+         echo "\033[0;31mdouble argument form takes a .cocci and .c\033[0m"
+      fi
+   else
+      cat << "USAGE" 
+Usage:
+   coc *.c :            Alias for spatch --parse-c foo.c
+   coc *.cocci :        Alias for spatch --parse-cocci foo.cocci
+   coc *.cocci *.c :    Alias for spatch --sp-file foo.cocci foo.c
+
+For more info, see http://coccinelle.lip6.fr/docs/options.pdf
+USAGE
+   fi
+}
+
+alias uaf="coc ~/fuckshitlol/uaf.cocci "
+alias sizeof="coc ~/fuckshitlol/noderef.cocci "
+alias nullderef="coc ~/fuckshitlol/nullcheck.cocci "
+alias mathgrep="coc ~/fuckshitlol/arithmetic.cocci "
+alias ass="coc ~/fuckshitlol/assignment_in_if.cocci "
+
+alias anal="gcc -Wall -Wextra -Wformat-security -Wconversion -Wsign-conversion -D_FORTIFY_SOURCE=2 -O2 "
+
+audit() {
+   YELLOW='\033[1;33m'; WHITE='\033[1;37m'; GREEN='\033[1;32m'; RED='\033[0;31m'; PURPLE='\033[0;35m'; NC='\033[0m';
+   echo "${YELLOW}Format strings:${NC}"
+   fmtgrep $1
+   echo "${WHITE}Sizeof pointer:${NC}"
+   sizeof $1
+   echo "${GREEN}Null dereference:${NC}"
+   nullderef $1
+   echo "${RED}UAF:${NC}"
+   uaf $1
+   echo "${PURPLE}bof:${NC}"
+   badgrep $1
+   echo "= instead of =="
+   ass $1
+   echo "switch case grep, expect many false positives"
+   switchgrep $1
+   echo "Broad sus grep, expect many false positives"
+   susgrep $1
+   #echo "Arithmetic operator grep, expect many false positives"
+   #mathgrep $1
+   echo "Run mathgrep $1 for a listing of all arithmetic"
+   echo "Run anal $1 for hardened gcc warnings"
+}
+
+line() {
+   awk '{print "/*" NR "*/\t" $0}' $1 > $2
+}
