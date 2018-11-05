@@ -87,6 +87,9 @@ snippet ret2libc "prepping ret2libc payload fodder"
 	sh = base + next(libc.search('sh\x00'))
 	binsh = base + next(libc.search('/bin/sh\x00'))
 
+snippet putsleak "using puts to leak a libc address. main is default ret addr"
+	io.sendline(flat(cyclic(20), elf.sym.puts, ${0:elf.sym.main}, elf.got.printf))
+
 # https://github.com/tnballo/notebook/wiki/Pwntools-Snippets#generate-a-format-string-exploit-for-arbitrary-write
 # Uses a linear search for the offset, so might not be great if the offset is very large, but otherwise this is M A G I C
 # TODO: tweak this snippet to work for format1
@@ -207,6 +210,9 @@ snippet ln
 
 snippet lx
 	log.hexdump(${0:msg})
+
+snippet snl
+	io.sendline(${0:payload})
 
 snippet gdb
 	if not remoteflag:

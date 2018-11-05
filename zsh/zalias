@@ -10,6 +10,9 @@ alias doot='cd ~/.dotfiles'
 alias ivm='vim'
 alias les='less'
 
+#prompt
+alias on='prompt fade'
+alias off='prompt off'
 
 # data processing
 len() {
@@ -160,6 +163,8 @@ bofn() { #basic probe for bof, don't be surprised if it doesn't work
    cyclic -l `cyclic $1 | strace ./$2 3>&1 1>&2 2>&3 3>&- | grep si_addr | sed -E 's/.*si_addr=(.*)}.*/\1/g'`
 }
 
+alias fault="dmesg -T | tail | grep segfault"
+
 aslroff() {
    echo 0 >! /proc/sys/kernel/randomize_va_space
 }
@@ -192,7 +197,7 @@ alias rage="source ~/.virtualenvs/angr/bin/activate"
 # source audit
 fmtgrep() {
    #cat -n $1 | egrep "printf\([^\"]"
-   cat -n $1 | egrep "([^fsn]printf *\( *[_A-Za-z]|sprintf *\( *[^\"]+ *, *[_A-Za-z]|fprintf *\( *[^\"]+ *, *[_A-Za-z])"
+   cat -n $1 | egrep "([^fsn]printf *\( *[_&A-Za-z]|sprintf *\( *[^\"]+ *, *[_&A-Za-z]|fprintf *\( *[^\"]+ *, *[_&A-Za-z])"
 }
 
 badgrep() {
@@ -264,6 +269,7 @@ audit() {
    #mathgrep $1
    echo "Run mathgrep $1 for a listing of all arithmetic"
    echo "Run anal $1 for hardened gcc warnings"
+   echo "if you can't compile it, it may still be lucrative to grep unsigned"
 }
 
 line() {
