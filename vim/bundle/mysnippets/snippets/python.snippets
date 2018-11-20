@@ -2,11 +2,8 @@ snippet lj
 	${1:string}.ljust(${2:1337}, '${3:A}')
 
 snippet regex
-	rgx = re.compile('${0:N=(\d+)\s+C=(\d+)}')
-	match = rgx.match(${1:line})
-	if not match is None:
-		n = int(match.group(1))
-		c = int(match.group(2))
+	match = re.search(r'${0:Needle: (.*)})', ${1:haystack})
+	if match: found = unpack(match.group(1))
 
 ## PWNTOOLS ##
 
