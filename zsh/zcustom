@@ -2,3 +2,7 @@ prompt fade
 
 export VISUAL=vim
 export EDITOR="$VISUAL"
+
+#golang lol
+export PATH=$PATH:$(go env GOPATH)/bin
+export GOPATH=$(go env GOPATH)
