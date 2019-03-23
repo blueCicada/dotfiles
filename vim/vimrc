@@ -111,3 +111,6 @@ let g:syntastic_go_gometalinter_args = ['--disable-all', '--enable=errcheck']
 "
 "let g:snippets_dir="~/.vim/bundle/snippets/snippets, ~/.vim/bundle/snippets/UltiSnips"
 "set rtp+=~/.vim/bundle/mysnippets/
+
+"https://coderwall.com/p/pkxrew/always-run-gofmt-in-vim
+au BufWritePost *.go !gofmt -w %
