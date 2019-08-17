@@ -6,3 +6,10 @@ export EDITOR="$VISUAL"
 #golang lol
 export PATH=$PATH:$(go env GOPATH)/bin
 export GOPATH=$(go env GOPATH)
+
+#ruby shit, needed for gems like one_gadget
+PATH="$PATH:$(ruby -e 'puts Gem.user_dir')/bin"
+
+#virtualenvwrapper shit
+export WORKON_HOME=$HOME/.virtualenvs
+source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
