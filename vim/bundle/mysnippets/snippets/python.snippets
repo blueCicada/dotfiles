@@ -325,6 +325,7 @@ snippet math "2+2 is 4, minus 1 that's 3 quick í´¥mathsí´¥"
 snippet angr
 	import angr
 	import claripy
+	import sys
 
 	p = angr.Project('./${1:binary_name}',  load_options={"auto_load_libs": False})
 
@@ -333,25 +334,26 @@ snippet angr
 	arg1 = claripy.BVS('lolfuk', 8 * 40)
 
 	# Generate initial state
-	st = p.factory.entry_state(args=['./$1', arg1])
+	#st = p.factory.entry_state(args=['./$1', arg1])
+	st = p.factory.entry_state(stdin=arg1)
 	#st = p.factory.blank_state(addr=0x400c6c)
 	#st.memory.store(0xffffffff, arg1)
 	#st.regs.rdi = 0xffffffff
 
 	# Create a path group and explore it
-	pg = p.factory.path_group(st)
-	#pg.explore(find=lambda p: "WIN" in p.state.posix.dumps(1))
-	pg.explore(find=[0x400e93], avoid=[])
+	pg = p.factory.simgr(st)
+	pg.explore(find=lambda lol: b"WIN" in lol.posix.dumps(1))
+	#pg.explore(find=[0x400e93], avoid=[])
 
-	print "pg = {}".format(pg)
+	print("pg = {}".format(pg))
 	if (len(pg.found) > 0):
-		 s = pg.found[0].state
-		 print "Found a solution:"
+		 s = pg.found[0]
+		 print("Found a solution:")
 		 # Find concrete values that satisfy the constraints
-		 print "arg1 = {} ".format(repr(s.se.any_str(arg1)))
-		 print s.posix.dumps(0).split('\0')[0] # this tends to work for simpler challs
+		 print("arg1 = {} ".format(repr(s.solver.eval(arg1, cast_to=bytes))))
+		 print(s.posix.dumps(0).split(b'\0')[0]) # this tends to work for simpler challs
 	else:
-	 	 print "fuckkkkkkk"
+	 	 print("fuckkkkkkk")
 
 
 #	import angr
