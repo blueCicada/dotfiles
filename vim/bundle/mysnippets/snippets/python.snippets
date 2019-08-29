@@ -96,11 +96,11 @@ snippet hexstrtoint "convert hexstring (ie a string, not a number) to an int"
 # HOWEVER, if the binary is statically linked (ie there is no libc code) then you need ROP
 snippet ret2libc "prepping ret2libc payload fodder"
 
-	libc = ELF('${1:libc.so}')
-	base = #leak_addr - libc.sym.
+	libc = ELF('${2:libc.so}')
+	base = libc_leak - libc.sym.${1:leakedfnname}
 
-	sys_off = libc.symbols['system']
-	sys = base + sys_off
+	sys = base + libc.sym.system
+	env = base + libc.sym.environ #this is a ptr to a stack ptr
 	sh = base + next(libc.search('sh\x00'))
 	binsh = base + next(libc.search('/bin/sh\x00'))
 
