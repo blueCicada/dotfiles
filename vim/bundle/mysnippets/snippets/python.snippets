@@ -5,6 +5,23 @@ snippet regex
 	match = re.search(r'${0:Needle: (.*)})', ${1:haystack})
 	if match: found = unpack(match.group(1))
 
+snippet bf "generic bruteforce loop, no multithreading"
+	from itertools import product
+	import string
+	import re
+	import sys
+	#import hashlib
+
+	alphabet = string.printable #string.ascii_uppercase #string.ascii_lowercase
+
+	for i in range(1, 10):
+		for curr in product(alphabet, repeat = i):
+			guess = ''.join(curr)
+			#if hashlib.md5(guess) == "aaaaaaaaaaaa":
+				print guess
+				sys.exit(0)
+	
+
 ## PWNTOOLS ##
 
 snippet pimp "pwn imports"
@@ -173,6 +190,26 @@ snippet fmt6
 #
 #	print rop.dump()
 #
+
+snippet ropp "64 bit rop utility functions"
+	#ret = pack(
+
+	def pop_rdi(arg):
+		 gadget_addr = 0
+		 return flat(gadget_addr, arg)#, 'JUNKRAT!') #add more junk args if needed
+	def pop_rsi(arg):
+		 gadget_addr = 0
+		 return flat(gadget_addr, arg)#, 'JUNKRAT!') #add more junk args if needed
+	def pop_rdx(arg):
+		 gadget_addr = 0
+		 return flat(gadget_addr, arg)#, 'JUNKRAT!') #add more junk args if needed
+	def pop_rcx(arg):
+		 gadget_addr = 0
+		 return flat(gadget_addr, arg)#, 'JUNKRAT!') #add more junk args if needed
+
+	def ropcall(targetFunction, args=[]):
+		 return ''.join(pop(args[i]) for i, pop in enumerate([pop_rdi, pop_rsi, pop_rdx, pop_rcx][:len(args)])) + pack(targetFunction)
+
 
 # https://bytesoverbombs.io/quickie-pwntools-414bb89ef83f
 snippet rop "rop template. This one doesn't use the rop module"
