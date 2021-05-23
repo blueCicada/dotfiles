@@ -9,22 +9,24 @@ alias doot='cd ~/.dotfiles'
 # typos
 alias ivm='vim'
 alias les='less'
-alias py='python'
-alias pyton='python'
-alias pthon='python'
-alias pyhon='python'
-alias ython='python'
-alias ptyhon='python'
-alias pyhton='python'
-alias pyhhon='python'
-alias pytohn='python'
-alias pythno='python'
-alias pyrhon='python'
-alias pyhthon='python'
-alias pythohn='python'
-alias pythnon='python'
-alias pytohnn='python'
-alias pyutohn='python'
+alias py2='python'
+alias py='python3'
+alias fgy='python3'
+alias pyton='python3'
+alias pthon='python3'
+alias pyhon='python3'
+alias ython='python3'
+alias ptyhon='python3'
+alias pyhton='python3'
+alias pyhhon='python3'
+alias pytohn='python3'
+alias pythno='python3'
+alias pyrhon='python3'
+alias pyhthon='python3'
+alias pythohn='python3'
+alias pythnon='python3'
+alias pytohnn='python3'
+alias pyutohn='python3'
 
 #prompt
 alias on='prompt fade'
@@ -290,4 +292,27 @@ audit() {
 
 line() {
    awk '{print "/*" NR "*/\t" $0}' $1 > $2
+}
+
+alias xcalc='open /System/Applications/Calculator.app'
+
+# atl testing
+alias confstart='docker run -d -p 8090:8090 atlassian/confluence-server:latest && echo "Running confsrv @ http://localhost:8090, wait for a bit..."'
+alias confkill="docker kill `docker ps | grep confl | cut -f1 -d' '`"
+#atlrun() {
+#   atlas-run-standalone --product $1
+#}
+alias atlrun='atlas-run-standalone --jvmargs "-Xmx3g -Xms512m -Datlassian.disable.caches=false" --product'
+
+# git
+alias conflict='git pull origin master'
+alias uncommit='git reset --soft HEAD~1' # preserve file changes
+alias newbranch='git checkout -b'
+alias newb=newbranch
+alias gull='git pull'
+alias gush='git push'
+
+# utils
+copy() {
+   cat $1 | pbcopy
 }

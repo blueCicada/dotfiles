@@ -424,3 +424,31 @@ snippet angrop
 	chain.print_payload_code()
 
 #TODO: make snippets for web
+snippet post
+	import requests
+	url = "${1:https://}"
+	body = {} 
+	#cookies = {} # or use requests.Session()
+	response = requests.post(url, ${2:data|json}=body) #, cookies=cookies)
+	print(response.status_code)
+	#response.raise_for_status()
+	#print(response.text)
+	#print(response.json())
+
+snippet get
+	import requests
+	url = "${1:https://}"
+	#payload = {}
+	#cookies = {} # or use requests.Session()
+	response = requests.get(url) #, params=payload, cookies=cookies)
+	print(response.status_code)
+	#response.raise_for_status()
+	#print(response.text)
+	#print(response.json())
+
+snippet proc
+	import subprocess
+	proc = subprocess.run(["${1:cmd}", "${2:arg1}"], stdout=subprocess.PIPE)
+	if proc.returncode:
+		raise
+	print(proc.stdout)
