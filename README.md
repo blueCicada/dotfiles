@@ -2,7 +2,7 @@
 
 Repo for managing my dotfiles & plugins ⚡🔌
 
-Inspiration taken from:
+Inspired by:
 * https://github.com/anishathalye/dotfiles/
 * https://github.com/minight/dotfiles
 
